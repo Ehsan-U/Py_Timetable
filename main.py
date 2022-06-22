@@ -1,6 +1,6 @@
+import json
+import argparse
 import openpyxl
-from rich.console import Console
-c = Console()
 from hashlib import md5
 
 class TimeTable():
@@ -8,13 +8,31 @@ class TimeTable():
         self.hashes = {}
         self.conflict = {'conflicts':[]}
         self.weekly = {}
-        self.wb = openpyxl.load_workbook('timetable.xlsx')
-        self.it = self.wb['BSIT(M)-VIII']
 
-    def get_data(self):
-        for row in self.it.iter_rows():
+    def start(self,filename):
+        self.wb = openpyxl.load_workbook(filename)
+        sheetnames = self.wb.sheetnames
+        for sheet in sheetnames:
+            wb = self.wb[sheet]
+            self.get_data(wb)
+            self.evaluate(wb,sheet)
+
+            # self.conflict['conflicts'].clear()
+            self.hashes.clear()
+        with open("conflicts.json", 'w') as f:
+            json.dump(self.conflict, f)
+
+    def argss(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-f','--file',dest='filename',help='Give the excel file path',required=True)
+        values = parser.parse_args()
+        args_Dict = vars(values)
+        return args_Dict
+
+    def get_data(self,wb):
+        for row in wb.iter_rows():
             for cell in row:
-                if cell.value and cell.row != 1:
+                if cell.value and cell.row > 5:
                     if cell.column == 1:
                         day = cell.value
                         self.weekly[day] = []
@@ -23,8 +41,9 @@ class TimeTable():
                         teacher = cell.value
                         timing = row[5].value
                         room = row[6].value
-                        self.weekly[day].append([day.lower(), teacher.lower(), timing.lower(), room.lower()])
-    def evaluate(self):
+                        self.weekly[day].append([str(day).lower(), str(teacher).lower(), str(timing).lower(), str(room).lower()])
+
+    def evaluate(self,wb,sheet):
         for day, val in self.weekly.items():
             if val:
                 for v in val:
@@ -35,9 +54,10 @@ class TimeTable():
                     if unique_id not in self.hashes:
                         self.hashes[unique_id] = v[1]
                     else:
-                        self.conflict['conflicts'].append([self.hashes.get(unique_id),v[1],v[2]])
-        
+                        self.conflict['conflicts'].append([self.hashes.get(unique_id),v[1],v[2],v[0],sheet])
+
 t = TimeTable()
-t.get_data()
-t.evaluate()
-c.print(t.conflict)
+args_Dict = t.argss()
+filename = args_Dict.get("filename")
+t.start(filename)
+# print(t.conflict)
