@@ -2,11 +2,12 @@ import json
 import argparse
 import openpyxl
 from hashlib import md5
+from rich.pretty import pprint
 
 class TimeTable():
     def __init__(self):
         self.hashes = {}
-        self.conflict = {'conflicts':[]}
+        self.conflict = {'Conflicts':[]}
         self.weekly = {}
 
     def start(self,filename):
@@ -16,8 +17,6 @@ class TimeTable():
             wb = self.wb[sheet]
             self.get_data(wb)
             self.evaluate(wb,sheet)
-
-            # self.conflict['conflicts'].clear()
             self.hashes.clear()
         with open("conflicts.json", 'w') as f:
             json.dump(self.conflict, f)
@@ -54,10 +53,11 @@ class TimeTable():
                     if unique_id not in self.hashes:
                         self.hashes[unique_id] = v[1]
                     else:
-                        self.conflict['conflicts'].append([self.hashes.get(unique_id),v[1],v[2],v[0],sheet])
+                        self.conflict['Conflicts'].append([self.hashes.get(unique_id),v[1],v[2],v[0],sheet])
 
 t = TimeTable()
 args_Dict = t.argss()
 filename = args_Dict.get("filename")
 t.start(filename)
-# print(t.conflict)
+pprint(t.conflict,expand_all=True)
+print("[+] File saved >> conflicts.json\n")
