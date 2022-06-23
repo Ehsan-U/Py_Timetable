@@ -43,6 +43,7 @@ class TimeTable():
                         self.weekly[day].append([str(day).lower(), str(teacher).lower(), str(timing).lower(), str(room).lower()])
 
     def evaluate(self,wb,sheet):
+        # two teaches at one place
         for day, val in self.weekly.items():
             if val:
                 for v in val:
@@ -54,6 +55,18 @@ class TimeTable():
                         self.hashes[unique_id] = v[1]
                     else:
                         self.conflict['Conflicts'].append([self.hashes.get(unique_id),v[1],v[2],v[0],sheet])
+        # one teacher at two places
+        for day, val in self.weekly.items():
+            if val:
+                for v in val:
+                    dtr = v[0]
+                    dtr += v[1]
+                    dtr += v[2]
+                    unique_id = md5(dtr.encode()).hexdigest()
+                    if unique_id not in self.hashes:
+                        self.hashes[unique_id] = f"{v[2]} ({v[3]})"
+                    else:
+                        self.conflict['Conflicts'].append([self.hashes.get(unique_id),v[1],f"{v[2]} ({v[3]})",v[0],sheet])
 
 t = TimeTable()
 args_Dict = t.argss()
@@ -61,3 +74,4 @@ filename = args_Dict.get("filename")
 t.start(filename)
 pprint(t.conflict,expand_all=True)
 print("[+] File saved >> conflicts.json\n")
+
