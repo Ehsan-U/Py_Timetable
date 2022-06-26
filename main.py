@@ -3,6 +3,7 @@ import argparse
 import openpyxl
 from hashlib import md5
 from rich.pretty import pprint
+import tkinter
 
 class TimeTable():
     def __init__(self):
@@ -18,8 +19,10 @@ class TimeTable():
             self.get_data(wb)
             self.evaluate(wb,sheet)
             self.hashes.clear()
+        # pprint(self.conflict,expand_all=True)
         with open("conflicts.json", 'w') as f:
             json.dump(self.conflict, f)
+        return self.conflict
 
     def argss(self):
         parser = argparse.ArgumentParser()
@@ -67,11 +70,33 @@ class TimeTable():
                         self.hashes[unique_id] = f"{v[2]} ({v[3]})"
                     else:
                         self.conflict['Conflicts'].append([self.hashes.get(unique_id),v[1],f"{v[2]} ({v[3]})",v[0],sheet])
+    def gui(self):
+        root = tkinter.Tk()
+        root.title('Py-resolver')
+        canvass = tkinter.Canvas(root,width=400,height=300)
+        canvass.pack()
+        # input label
+        label = tkinter.Label(master=root,text="Excel Filepath")
+        canvass.create_window(200,110,window=label)
+        # input box
+        entry = tkinter.Entry(root,width=30)
+        canvass.create_window(200,140,window=entry)
+        # any func
+        def lets_try():
+            name = entry.get()
+            if self.start(name):
+                l = tkinter.Label(text='File Saved >> conflicts.json',master=root)
+                canvass.create_window(200,220,window=l)
+        # set button
+        button = tkinter.Button(text="Submit",command=lets_try)
+        canvass.create_window(200,180,window=button)
+        
+        root.mainloop()
 
-t = TimeTable()
-args_Dict = t.argss()
-filename = args_Dict.get("filename")
-t.start(filename)
-pprint(t.conflict,expand_all=True)
-print("[+] File saved >> conflicts.json\n")
-
+# t = TimeTable()
+# # args_Dict = t.argss()
+# # filename = args_Dict.get("filename")
+# # t.start(filename)
+# # pprint(t.conflict,expand_all=True)
+# # print("[+] File saved >> conflicts.json\n")
+# t.gui()
